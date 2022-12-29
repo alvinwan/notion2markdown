@@ -2,7 +2,7 @@
 
 Python export for notion pages to markdown, staying as close as possible to the Notion markdown export.
 
-## Usage
+## Install
 
 To install the package, run:
 
@@ -10,11 +10,21 @@ To install the package, run:
 pip install notion2markdown
 ```
 
-From the command line, run:
+## Usage: CLI
+
+As the official [notion-sdk-py](https://github.com/ramnes/notion-sdk-py) library notes,
+
+> Before getting started, [create an integration](https://www.notion.com/my-integrations) and find the token. [→ Learn more about authorization.](https://developers.notion.com/docs/authorization)
+
+From the command line, run the following to export a notion page:
 
 ```bash
-notion2markdown --token <token> --page_id <page_id> --output <output_file>
+notion2markdown https://notion.so/XXXX
 ```
+
+Note that URL can be for a database or a single page. By default markdown will be exported to a directory named `./md`.
+
+## Usage: Library
 
 You can also write a script to export multiple pages. For example:
 
@@ -69,5 +79,7 @@ It's worth noting that `notion2md` and the Notion markdown export both otherwise
 
 ### 2. Export databases, with metadata
 
-- Notion's official markdown export includes the title along with any properties associated with the page. This library `notion2markdown` does the same, adding properties and the title in the same format that the official Notion export does. By contrast, `notion2md` excludes the metadata and page properties, just exporting the page content.
+Notion's official markdown export includes the title along with any properties associated with the page.
+
+- This library `notion2markdown` does the same, adding properties and the title in the same format that the official Notion export does. By contrast, `notion2md` excludes the metadata and page properties, just exporting the page content.
 - Furthermore, `notion2markdown` can export an entire database, like Notion's official export. On the other hand, `notion2md` is designed to export individual pages. Naturally, it could be extended to export entire databases.
