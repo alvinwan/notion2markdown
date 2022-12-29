@@ -1,6 +1,6 @@
 # notion2markdown
 
-Python export for notion pages to markdown, staying as close as possible to the Notion markdown export.
+Export notion pages to markdown in Python, staying as close as possible to the official Notion markdown export.
 
 ## Install
 
