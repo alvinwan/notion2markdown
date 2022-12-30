@@ -15,13 +15,13 @@ pip install notion2markdown
 Put the following in your `~/.zshrc`, and start a new terminal session.
 
 ```bash
-export NOTION_TOKEN=...
+export NOTION_TOKEN=my_notion_token
 ```
 
 Then, export a notion page or database.
 
 ```bash
-notion2markdown notion_url
+notion2markdown my_notion_url
 ```
 
 > If you get the following error, `notion_client.errors.APIResponseError: Could not find block with ID`, follow the suggestion provided: ` Make sure the relevant pages and databases are shared with your integration.` [Click here for a tutorial](https://www.notion.so/help/add-and-manage-connections-with-the-api#add-connections-to-pages) on granting your integration access to your database or page.
@@ -29,7 +29,7 @@ notion2markdown notion_url
 By default markdown will be exported to a directory named `./md`. You can also use the `n2md` alias
 
 ```bash
-n2md notion_url
+n2md my_notion_url
 ```
 
 ## Library
@@ -42,7 +42,7 @@ import os
 
 
 exporter = NotionExporter(token=os.environ["NOTION_TOKEN"])
-exporter.export_url(url='https://lvinwan.notion.site/lvinwan/Example-Notion-Page-f8deb4d042034c6c8d03b6de37a99498')
+exporter.export_url(url='my_notion_url')
 ```
 
 You may optionally download JSON, then convert to markdown separately. This may be helpful if you want to cache downloads, for example. You can use the exporter's downloader and converter separately, like this:
@@ -55,7 +55,7 @@ exporter.converter.convert()  # Convert json to md
 You may also export to any directory of your choosing.
 
 ```python
-exporter.export_url(url, json_dir='./my_special_directory')
+exporter.export_url(url, json_dir='./my_md_directory')
 ```
 
 ## Why use this library?
