@@ -287,12 +287,13 @@ class JsonToMd:
             cur = blocks[i]
             prv = blocks[i - 1] if i > 0 else None
             nxt = blocks[i + 1] if i + 1 < len(blocks) else None
-            if cur["type"] != (nxt and nxt["type"]):
-                result += "\n"
             if (md := self.json2md(cur, prv, nxt)) is not noop:
                 result += "\n" + md
             else:
                 raise NotImplementedError(f"Unsupported block type: {cur['type']}")
+            
+            if cur["type"] != (nxt and nxt["type"]):
+                result += "\n"
         return result
 
     def page2md(self, blocks: List[dict]) -> str:
