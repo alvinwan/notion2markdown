@@ -12,21 +12,27 @@ pip install notion2markdown
 
 > Before getting started, [create a notion integration](https://developers.notion.com/docs/create-a-notion-integration), and grab the token.
 
+Put the following in your `~/.zshrc`, and start a new terminal session.
+
 ```bash
 export NOTION_TOKEN=...
 ```
 
-Then, run the either of the following to export a notion page or database.
+Then, export a notion page or database. The below exports [this page](https://lvinwan.notion.site/lvinwan/Example-Notion-Page-f8deb4d042034c6c8d03b6de37a99498)
 
 ```bash
-notion2markdown notion_url  # or `n2md notion_url`
+notion2markdown https://lvinwan.notion.site/lvinwan/Example-Notion-Page-f8deb4d042034c6c8d03b6de37a99498
 ```
 
-By default markdown will be exported to a directory named `./md`.
+By default markdown will be exported to a directory named `./md`. You can also use the `n2md` alias
+
+```bash
+n2md https://lvinwan.notion.site/lvinwan/Example-Notion-Page-f8deb4d042034c6c8d03b6de37a99498
+```
 
 ## Library
 
-You can also write a script to export, programmatically.
+You can also write a script to export, programmatically. See [`example.py`](https://github.com/alvinwan/notion2markdown/blob/main/example.py).
 
 ```python
 from notion2markdown import NotionExporter
@@ -34,14 +40,7 @@ import os
 
 
 exporter = NotionExporter(token=os.environ["NOTION_TOKEN"])
-exporter.export_url(url=os.environ["NOTION_URL"])
-```
-
-The above demo is available at `example.py` and can be run with:
-
-```bash
-git clone git@github.com:alvinwan/notion2markdown.git
-python example.py
+exporter.export_url(url='https://lvinwan.notion.site/lvinwan/Example-Notion-Page-f8deb4d042034c6c8d03b6de37a99498')
 ```
 
 You may optionally download JSON, then convert to markdown separately. This may be helpful if you want to cache downloads, for example. You can use the exporter's downloader and converter separately, like this:
@@ -94,3 +93,16 @@ Notion's official markdown export includes the title along with any properties a
 This library `notion2markdown` does the same, adding properties and the title in the same format that the official Notion export does. By contrast, `notion2md` excludes the metadata and page properties, just exporting the page content.
 
 Furthermore, `notion2markdown` can export an entire database, like Notion's official export. On the other hand, `notion2md` is designed to export individual pages. Naturally, it could be extended to export entire databases.
+
+## Develop
+
+```bash
+git clone git@github.com:alvinwan/notion2markdown.git
+pip install --editable .
+```
+
+Run tests
+
+```bash
+pytest notion2markdown --doctest-modules
+```
