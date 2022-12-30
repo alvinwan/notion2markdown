@@ -1,16 +1,14 @@
 # notion2markdown
 
-Export notion pages to markdown in Python, staying as close as possible to the official Notion markdown export.
+Export notion pages to markdown in Python.
 
 ## Install
-
-To install the package, run:
 
 ```bash
 pip install notion2markdown
 ```
 
-## Usage: CLI
+## CLI
 
 > Before getting started, [create a notion integration](https://developers.notion.com/docs/create-a-notion-integration), and grab the token.
 
@@ -26,7 +24,7 @@ notion2markdown notion_url
 
 By default markdown will be exported to a directory named `./md`.
 
-## Usage: Library
+## Library
 
 You can also write a script to export, programmatically.
 
@@ -93,5 +91,6 @@ It's worth noting that `notion2md` and the Notion markdown export both otherwise
 
 Notion's official markdown export includes the title along with any properties associated with the page.
 
-- This library `notion2markdown` does the same, adding properties and the title in the same format that the official Notion export does. By contrast, `notion2md` excludes the metadata and page properties, just exporting the page content.
-- Furthermore, `notion2markdown` can export an entire database, like Notion's official export. On the other hand, `notion2md` is designed to export individual pages. Naturally, it could be extended to export entire databases.
+This library `notion2markdown` does the same, adding properties and the title in the same format that the official Notion export does. By contrast, `notion2md` excludes the metadata and page properties, just exporting the page content.
+
+Furthermore, `notion2markdown` can export an entire database, like Notion's official export. On the other hand, `notion2md` is designed to export individual pages. Naturally, it could be extended to export entire databases.
