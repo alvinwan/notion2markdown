@@ -166,8 +166,9 @@ class JsonToMd:
 
     @rule
     def block_callout(self, value, prv=None, nxt=None):
+        # Following this convention: https://docs.readme.com/rdmd/docs/callouts (callouts denoted by leading emoji)
         if isinstance(value, dict) and value.get("type", "") == "callout":
-            return f"<aside>\n{self.json2md(value['callout']['icon'])} {self.json2md(value['callout']['rich_text'])}\n{self.jsons2md(value['children'])}</aside>"
+            return '\n'.join([f"> {line}" for line in f"{self.json2md(value['callout']['icon'])}\n\n{self.json2md(value['callout']['rich_text'])}\n{self.jsons2md(value['children'])}".splitlines()])
         return noop
 
     @rule
@@ -292,8 +293,10 @@ class JsonToMd:
             else:
                 raise NotImplementedError(f"Unsupported block type: {cur['type']}")
             
-            if cur["type"] != (nxt and nxt["type"]):
-                result += "\n"
+            if cur["type"] != (nxt and nxt["type"]) or (
+                cur["type"] == "callout" and (nxt and nxt["type"] == "callout")  # TODO: how to make more general? everyone except li?
+            ):
+                result += "\n" 
         return result
 
     def page2md(self, blocks: List[dict]) -> str:
