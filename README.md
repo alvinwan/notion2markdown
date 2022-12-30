@@ -12,44 +12,56 @@ pip install notion2markdown
 
 ## Usage: CLI
 
-As the official [notion-sdk-py](https://github.com/ramnes/notion-sdk-py) library notes,
-
-> Before getting started, [create an integration](https://www.notion.com/my-integrations) and find the token. [→ Learn more about authorization.](https://developers.notion.com/docs/authorization)
-
-From the command line, run the following to export a notion page:
+> Before getting started, [create a notion integration](https://developers.notion.com/docs/create-a-notion-integration), and grab the token.
 
 ```bash
-notion2markdown https://notion.so/XXXX
+export NOTION_TOKEN=...
 ```
 
-Note that URL can be for a database or a single page. By default markdown will be exported to a directory named `./md`.
+Then, run the following to export a notion page or database.
+
+```bash
+notion2markdown notion_url
+```
+
+By default markdown will be exported to a directory named `./md`.
 
 ## Usage: Library
 
-You can also write a script to export multiple pages. For example:
+You can also write a script to export, programmatically.
 
 ```python
-from notion2markdown import NotionDownloader, JsonToMdConverter
+from notion2markdown import NotionExporter
+import os
 
-...
 
-notion = NotionDownloader(token, database_id)
-notion.download("./json")
-
-converter = JsonToMdConverter("./json")
-converter.convert("./md")
+exporter = NotionExporter(token=os.environ["NOTION_TOKEN"])
+exporter.export_url(url=os.environ["NOTION_URL"])
 ```
 
 The above demo is available at `example.py` and can be run with:
 
 ```bash
-git clone XXX
+git clone git@github.com:alvinwan/notion2markdown.git
 python example.py
+```
+
+You may optionally download JSON, then convert to markdown separately. This may be helpful if you want to cache downloads, for example. You can use the exporter's downloader and converter separately, like this:
+
+```python
+exporter.downloader.download_url(url)  # Download json
+exporter.converter.convert()  # Convert json to md
+```
+
+You may also export to any directory of your choosing.
+
+```python
+exporter.export_url(url, json_dir='./my_special_directory')
 ```
 
 ## Why use this library?
 
-To start, Notion's official markdown export is available only via the UI. Even if they exposed it via an API, however, it still has issues.
+To start, Notion's official markdown export is (1) available only via the UI and (2) buggy.
 
 ### 1. Fix random asterisks
 
