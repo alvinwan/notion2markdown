@@ -293,10 +293,11 @@ class JsonToMd:
             else:
                 raise NotImplementedError(f"Unsupported block type: {cur['type']}")
             
-            if cur["type"] != (nxt and nxt["type"]) or (
-                cur["type"] == "callout" and (nxt and nxt["type"] == "callout")  # TODO: how to make more general? everyone except li?
-            ):
+            if cur["type"] != (nxt and nxt["type"]):
                 result += "\n" 
+
+            if cur["type"] == "callout" and (nxt and nxt["type"] == "callout"):
+                result += '\n<!-- -->\n'  # weird property of blockquote parsing: https://stackoverflow.com/a/13066620/4855984
         return result
 
     def page2md(self, blocks: List[dict]) -> str:
