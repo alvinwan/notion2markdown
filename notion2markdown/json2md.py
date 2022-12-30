@@ -146,7 +146,7 @@ class JsonToMd:
             if value.get("start") and not value.get("end"):
                 return datetime.strptime(
                     self.json2md(value["start"]), "%Y-%m-%d"
-                ).strftime("%b%e,%Y")
+                ).strftime("%b %e, %Y")
         # TODO: catch any other dates?
         return noop
 
