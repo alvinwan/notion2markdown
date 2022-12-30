@@ -22,10 +22,6 @@ def rule(func):
 
 
 class JsonToMdConverter:
-    def __init__(self, json_dir: Union[str, Path]):
-        self.json_dir = Path(json_dir)
-        self.json_dir.mkdir(parents=True, exist_ok=True)
-
     def get_post_metadata(self, post):
         converter = JsonToMd(config={"apply_list": {"delimiter": ","}})
         return {
@@ -34,9 +30,12 @@ class JsonToMdConverter:
             if converter.json2md(value)
         }
 
-    def convert(self, out_dir: str):
-        json_dir = self.json_dir
-        out_dir = Path(out_dir)
+    def convert(self, json_dir: Union[str, Path], md_dir: Union[str, Path]):
+        json_dir = Path(json_dir)
+        json_dir.mkdir(parents=True, exist_ok=True)
+
+        md_dir = Path(md_dir)
+        md_dir.mkdir(parents=True, exist_ok=True)
 
         with open(json_dir / "database.json") as f:
             page_id_to_metadata = {
@@ -48,7 +47,7 @@ class JsonToMdConverter:
                 blocks = json.load(f)
                 page_id = Path(path).stem
                 slug = page_id.replace('-', '')
-                path = out_dir / f"{slug}.md"
+                path = md_dir / f"{slug}.md"
                 if page_id not in page_id_to_metadata:  # page has been deleted
                     if path.exists():
                         path.unlink()

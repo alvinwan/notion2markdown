@@ -1,12 +1,10 @@
-from notion2markdown import NotionDownloader, JsonToMdConverter
+from notion2markdown import NotionExporter
 import os
 
 
 token = os.environ["NOTION_TOKEN"]
-database_id = os.environ["NOTION_DATABASE_ID"]
+url = os.environ["NOTION_URL"]
 
-notion = NotionDownloader(token, database_id)
-notion.download("./json")
 
-converter = JsonToMdConverter("./json")
-converter.convert("./md")
+exporter = NotionExporter(token=token)
+exporter.export_url(url=url, json_dir="./json", md_dir="./md")
