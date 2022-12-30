@@ -25,12 +25,16 @@ class NotionDownloader:
         else:
             self.download_database(slug, out_dir)
 
-    def download_page(self, page_id: str, out_path: Union[str, Path]='./json'):
+    def download_page(self, page_id: str, out_path: Union[str, Path]='./json', fetch_metadata: bool=True):
         """Download the notion page."""
         out_path = Path(out_path)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         blocks = self.notion.get_blocks(page_id)
         self.io.save(blocks, out_path)
+
+        if fetch_metadata:
+            metadata = self.notion.get_metadata(page_id)
+            self.io.save([metadata], out_path.parent / "database.json")
 
     def download_database(self, database_id: str, out_dir: Union[str, Path]='./json'):
         """Download the notion database and associated pages."""
@@ -43,7 +47,7 @@ class NotionDownloader:
 
         for cur in pages:  # download individual pages in database IF updated
             if prev.get(cur["id"], datetime(1, 1, 1)) < cur["last_edited_time"]:
-                self.download_page(cur["id"], out_dir / f"{cur['id']}.json")
+                self.download_page(cur["id"], out_dir / f"{cur['id']}.json", False)
                 logger.info(f"Downloaded {cur['url']}")
 
 
@@ -86,6 +90,10 @@ class NotionClient:
     def __init__(self, token: str, transformer):
         self.client = Client(auth=token)
         self.transformer = transformer
+
+    def get_metadata(self, page_id: str) -> dict:
+        """Get page metadata as json."""
+        return self.transformer.forward([self.client.pages.retrieve(page_id=page_id)])[0]
 
     def get_blocks(self, block_id: int) -> List:
         """Get all page blocks as json. Recursively fetches descendants."""
