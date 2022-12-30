@@ -92,7 +92,7 @@ It's worth noting that `notion2md` and the Notion markdown export both otherwise
 
 Notion's official markdown export includes the title along with any properties associated with the page.
 
-This library `notion2markdown` does the same, adding properties and the title in the same format that the official Notion export does. By contrast, `notion2md` excludes the metadata and page properties, just exporting the page content.
+This library `notion2markdown` does the same, adding properties and the title. However, unlike the official Notion export, properties are included as YAML frontmatter, which is supported in [modern markdown flavors](https://github.com/Python-Markdown/markdown/blob/eff6c3a0415cb63bc0b38c29b5a7f584619e3c1c/docs/extensions/meta_data.md). By contrast, `notion2md` excludes the metadata and page properties, just exporting the page content.
 
 Furthermore, `notion2markdown` can export an entire database, like Notion's official export. On the other hand, `notion2md` is designed to export individual pages. Naturally, it could be extended to export entire databases.
 
