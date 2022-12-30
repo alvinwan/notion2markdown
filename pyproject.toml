@@ -25,6 +25,7 @@ include = ["notion2markdown"]
 
 [project.scripts]
 notion2markdown = "notion2markdown.cli:main"
+n2md = "notion2markdown.cli:main"
 
 [project.urls]
 "Homepage" = "https://github.com/alvinwan/notion2markdown"
