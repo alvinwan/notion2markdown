@@ -18,16 +18,18 @@ Put the following in your `~/.zshrc`, and start a new terminal session.
 export NOTION_TOKEN=...
 ```
 
-Then, export a notion page or database. The below exports [this page](https://lvinwan.notion.site/lvinwan/Example-Notion-Page-f8deb4d042034c6c8d03b6de37a99498)
+Then, export a notion page or database.
 
 ```bash
-notion2markdown https://lvinwan.notion.site/lvinwan/Example-Notion-Page-f8deb4d042034c6c8d03b6de37a99498
+notion2markdown notion_url
 ```
+
+> If you get the following error, `notion_client.errors.APIResponseError: Could not find block with ID`, follow the suggestion provided: ` Make sure the relevant pages and databases are shared with your integration.` [Click here for a tutorial](https://www.notion.so/help/add-and-manage-connections-with-the-api#add-connections-to-pages) on granting your integration access to your database or page.
 
 By default markdown will be exported to a directory named `./md`. You can also use the `n2md` alias
 
 ```bash
-n2md https://lvinwan.notion.site/lvinwan/Example-Notion-Page-f8deb4d042034c6c8d03b6de37a99498
+n2md notion_url
 ```
 
 ## Library
