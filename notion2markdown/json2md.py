@@ -57,7 +57,7 @@ class JsonToMdConverter:
                 with open(path, "w") as f:
                     f.write(markdown)
 
-        return page_id_to_metadata
+        return page_id_to_metadata, md_dir
 
 
 class JsonToMd:

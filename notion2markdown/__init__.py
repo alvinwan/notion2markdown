@@ -12,7 +12,7 @@ class NotionExporter:
     def export_url(self, url: str, json_dir: Union[str, Path]='./json', md_dir: Union[str, Path]='./md'):
         """Export the notion page or database."""
         self.downloader.download_url(url, json_dir)
-        self.converter.convert(json_dir, md_dir)
+        return self.converter.convert(json_dir, md_dir)
 
     def export_database(self, database_id: str, json_dir: Union[str, Path]='./json', md_dir: Union[str, Path]='./md'):
         """Export the notion database and associated pages."""
