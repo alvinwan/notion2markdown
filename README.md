@@ -16,10 +16,10 @@ pip install notion2markdown
 export NOTION_TOKEN=...
 ```
 
-Then, run the following to export a notion page or database.
+Then, run the following to export a notion page or database. The below command exports [this page](https://lvinwan.notion.site/Example-Notion-Page-f8deb4d042034c6c8d03b6de37a99498).
 
 ```bash
-notion2markdown notion_url
+notion2markdown https://lvinwan.notion.site/Example-Notion-Page-f8deb4d042034c6c8d03b6de37a99498
 ```
 
 By default markdown will be exported to a directory named `./md`.
@@ -34,15 +34,10 @@ import os
 
 
 exporter = NotionExporter(token=os.environ["NOTION_TOKEN"])
-exporter.export_url(url=os.environ["NOTION_URL"])
+exporter.export_url(url='https://lvinwan.notion.site/Example-Notion-Page-f8deb4d042034c6c8d03b6de37a99498')  # change this to your notion page
 ```
 
-The above demo is available at `example.py` and can be run with:
-
-```bash
-git clone git@github.com:alvinwan/notion2markdown.git
-python example.py
-```
+The above demo is available at [`example.py`](https://github.com/alvinwan/notion2markdown/blob/main/example.py).
 
 You may optionally download JSON, then convert to markdown separately. This may be helpful if you want to cache downloads, for example. You can use the exporter's downloader and converter separately, like this:
 
@@ -94,3 +89,17 @@ Notion's official markdown export includes the title along with any properties a
 This library `notion2markdown` does the same, adding properties and the title in the same format that the official Notion export does. By contrast, `notion2md` excludes the metadata and page properties, just exporting the page content.
 
 Furthermore, `notion2markdown` can export an entire database, like Notion's official export. On the other hand, `notion2md` is designed to export individual pages. Naturally, it could be extended to export entire databases.
+
+
+## Develop
+
+```bash
+git clone git@github.com:alvinwan/notion2markdown.git
+pip install --editable .
+```
+
+Run tests using `pytest`.
+
+```bash
+pytest notion2markdown --doctest-modules
+```
