@@ -15,5 +15,5 @@ def main():
     assert token is not None, "Must set token using --token flag or in environment variable NOTION_TOKEN"
 
     exporter = NotionExporter(token=token)
-    _, path = exporter.export_url(url=args.url)
+    path = exporter.export_url(url=args.url)
     logger.info(f"Exported to {path}")
