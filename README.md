@@ -1,6 +1,14 @@
 # notion2markdown
 
-Export notion pages to markdown in Python.
+Export notion pages and databases to markdown.
+
+<img width="1069" alt="Screenshot 2022-12-30 at 6 48 22 PM" src="https://user-images.githubusercontent.com/2068077/210122776-e34d5bdf-bd55-4f38-a66b-341daa809a00.png">
+
+For a zero-installation demo:
+
+1. Check out the [example Notion page](https://lvinwan.notion.site/Example-Notion-Page-f8deb4d042034c6c8d03b6de37a99498), which is pictured above.
+2. Navigate to the [example script, hosted on replit](https://replit.com/@lvinwan/notion2markdown), and hit the "Run" button.
+3. The Notion page is exported as markdown to `./md/f8deb4d042034c6c8d03b6de37a99498.md`. You can view this file by clicking on "show files" in the top-left of the embedded editor.
 
 ## Install
 
@@ -10,7 +18,7 @@ pip install notion2markdown
 
 ## CLI
 
-> Before getting started, [create a notion integration](https://developers.notion.com/docs/create-a-notion-integration), and grab the token.
+> Before getting started, follow the first two steps in this [notion integration tutorial](https://developers.notion.com/docs/create-a-notion-integration) to create a token and grant access to a notion page.
 
 Put the following in your `~/.zshrc`, and start a new terminal session.
 
