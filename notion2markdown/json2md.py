@@ -5,6 +5,8 @@ import json
 from pathlib import Path
 from typing import List, Union
 
+from .utils import normalize_id
+
 
 class Noop:
     pass
@@ -39,7 +41,7 @@ class JsonToMdConverter:
 
         with open(json_dir / "database.json") as f:
             page_id_to_metadata = {
-                page["id"].replace('-', ''): self.get_post_metadata(page) for page in json.load(f)
+                page["id"]: self.get_post_metadata(page) for page in json.load(f)
             }
 
         for path in glob.iglob(str(json_dir / "*.json")):
@@ -47,9 +49,8 @@ class JsonToMdConverter:
                 continue
             with open(path) as f:
                 blocks = json.load(f)
-                page_id = Path(path).stem.replace('-', '')
-                slug = page_id.replace('-', '')
-                path = md_dir / f"{slug}.md"
+                page_id = Path(path).stem
+                path = md_dir / f"{page_id}.md"
                 if page_id not in page_id_to_metadata:  # page has been deleted
                     continue
                 metadata = page_id_to_metadata[page_id]
@@ -250,10 +251,11 @@ class JsonToMd:
             for key in (
                 "name",
                 "content",
-                "id",
             ):  # TODO: split this out. misc shouldnt be needed?
                 if key in value:
                     return self.json2md(value[key])
+            if 'id' in value:
+                return normalize_id(value['id'])
         return noop
 
     @rule

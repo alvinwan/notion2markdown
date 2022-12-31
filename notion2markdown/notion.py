@@ -3,7 +3,7 @@ from pathlib import Path
 import json
 from itertools import chain
 from typing import List, Union
-from .utils import logger
+from .utils import logger, normalize_id
 
 from notion_client import Client
 from notion_client.helpers import iterate_paginated_api as paginate
@@ -53,9 +53,11 @@ class NotionDownloader:
 
 class LastEditedToDateTime:
     def forward(self, blocks, key: str = "last_edited_time") -> List:
-        return [
-            {**block, key: datetime.fromisoformat(block[key][:-1])} for block in blocks
-        ]
+        return [{
+            **block,
+            'last_edited_time': datetime.fromisoformat(block['last_edited_time'][:-1]),
+            'id': normalize_id(block['id']),
+        } for block in blocks]
 
     def reverse(self, o) -> Union[None, str]:
         if isinstance(o, datetime):
