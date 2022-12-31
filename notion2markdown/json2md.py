@@ -58,7 +58,10 @@ class JsonToMdConverter:
                 with open(path, "w") as f:
                     f.write(markdown)
 
-        return page_id_to_metadata, md_dir
+                if len(metadata) == 1:
+                    return path
+
+        return md_dir
 
 
 class JsonToMd:
@@ -308,6 +311,8 @@ class JsonToMd:
         for key, value in self.metadata.items():
             if value:
                 markdown += f"{key}: {value}\n"
-        markdown += f"---\n\n# {self.metadata['Name']}\n\n"
+        markdown += f"---\n\n"
+        if title := self.metadata.get('Name') or self.metadata.get('title'):
+            markdown += f"# {title}\n\n"
         markdown += self.jsons2md(blocks)
         return markdown

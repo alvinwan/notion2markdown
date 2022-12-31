@@ -3,4 +3,5 @@ import os
 
 
 exporter = NotionExporter(token=os.environ["NOTION_TOKEN"])
-exporter.export_url(url='https://lvinwan.notion.site/Example-Notion-Page-f8deb4d042034c6c8d03b6de37a99498')
+path = exporter.export_url(url=os.environ["NOTION_URL"])
+print(f" * Exported to {path}")
