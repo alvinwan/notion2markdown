@@ -212,7 +212,7 @@ class JsonToMd:
     @rule
     def block_code(self, value, prv=None, nxt=None):
         if isinstance(value, dict) and value.get("type", "") == "code":
-            return f"```\n{self.json2md(value['code']['rich_text'])}\n```"
+            return f"```{value['code']['language']}\n{self.json2md(value['code']['rich_text'])}\n```"
         return noop
 
     @rule
