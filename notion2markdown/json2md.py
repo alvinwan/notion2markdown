@@ -200,7 +200,8 @@ class JsonToMd:
     @rule
     def block_quote(self, value, prv=None, nxt=None):
         if isinstance(value, dict) and value.get("type", "") == "quote":
-            return f"> {self.json2md(value['quote']['rich_text'])}\n{self.jsons2md(value['children'])}"
+            out = f"> {self.json2md(value['quote']['rich_text'])}\n{self.jsons2md(value['children'])}"
+            return '\n> '.join(out.splitlines())
         return noop
 
     @rule
@@ -259,6 +260,12 @@ class JsonToMd:
                     return self.json2md(value[key])
             if 'id' in value:
                 return normalize_id(value['id'])
+        return noop
+
+    @rule
+    def apply_text(self, value, prv=None, nxt=None):
+        if isinstance(value, dict) and "text" in value:
+            return value["text"]["content"]
         return noop
 
     @rule
