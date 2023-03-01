@@ -95,7 +95,13 @@ class JsonToMd:
         return noop
 
     @rule
-    def apply_annotation(self, value, prv=None, nxt=None):
+    def apply_annotation(self, value, prv=None, nxt=None, annotation_to_mark={
+        "strikethrough": "~~",
+        "bold": "**",
+        "italic": "*",
+        "underline": "__",
+        "code": "`",
+    }):
         """
         >>> c = JsonToMd()
         >>> hello_bold = {"type": "text", "text": {"content": "hello", "link": None}, "annotations": {"bold": True, "italic": False, "strikethrough": False, "underline": False, "code": False, "color": "default"}}
@@ -118,21 +124,22 @@ class JsonToMd:
             annotations = value.get("annotations", {})
 
             # open annotations first
-            annotation_to_mark = {
-                "strikethrough": "~~",
-                "bold": "**",
-                "italic": "*",
-                "underline": "__",
-                "code": "`",
-            }
             applied = []
             for annotation, mark in annotation_to_mark.items():
-                if annotation not in self.state["apply_annotation"]["annotations"]:
-                    if annotations.get(annotation):
-                        # starting annotations in this loop work from the inside out. so we need to insert them at the beginning of the list
-                        applied.insert(0, annotation)
-                        if not (prv and prv.get("annotations", {}).get(annotation)):
-                            text = f"{mark}{text}"
+                if (
+                    annotation not in self.state["apply_annotation"]["annotations"]
+                    and annotations.get(annotation)
+                ):
+                    # NOTE: starting annotations in this loop work from the
+                    # inside out. so we need to insert them at the beginning of
+                    # the list
+                    applied.insert(0, annotation)
+                    if not (prv and prv.get("annotations", {}).get(annotation)):
+                        text = '\n'.join([
+                            f'{mark}{line}' if line else ''
+                            for line in text.split('\n')
+                        ])  # NOTE: markdown syntax does not apply to multiple lines
+
             # add the new annotations to the end* of the list of open annotations
             self.state["apply_annotation"]["annotations"].extend(applied)
 
@@ -140,7 +147,10 @@ class JsonToMd:
             for annotation in self.state["apply_annotation"]["annotations"][::-1]:
                 if not (nxt and nxt.get("annotations", {}).get(annotation)):
                     self.state["apply_annotation"]["annotations"].remove(annotation)
-                    text = f"{text}{annotation_to_mark[annotation]}"
+                    text = '\n'.join([
+                        f'{line}{annotation_to_mark[annotation]}' if line else ''
+                        for line in text.split('\n')
+                    ])  # NOTE: markdown syntax does not apply to multiple lines
             return text
         return noop
 
