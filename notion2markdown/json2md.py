@@ -44,9 +44,11 @@ class JsonToMdConverter:
                 page["id"]: self.get_post_metadata(page) for page in json.load(f)
             }
 
-        for path in glob.iglob(str(json_dir / "*.json")):
-            if Path(path).name == "database.json":
-                continue
+        paths = [
+            path for path in glob.glob(str(json_dir / "*.json"))
+            if Path(path).name != "database.json"
+        ]
+        for path in paths:
             with open(path) as f:
                 blocks = json.load(f)
                 page_id = Path(path).stem
@@ -58,7 +60,7 @@ class JsonToMdConverter:
                 with open(path, "w") as f:
                     f.write(markdown)
 
-                if len(metadata) == 1:
+                if len(paths) == 1:
                     return path
 
         return md_dir
