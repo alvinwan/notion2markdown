@@ -78,16 +78,15 @@ class JsonToMd:
         if isinstance(value, list):
             if len(value) == 0:
                 return ""
-            return delimiter.join(
-                [
-                    self.json2md(
-                        value[i],
-                        value[i - 1] if i - 1 >= 0 else None,
-                        value[i + 1] if i + 1 < len(value) else None,
-                    )
-                    for i in range(len(value))
-                ]
-            )
+            pieces = [
+                self.json2md(
+                    value[i],
+                    value[i - 1] if i - 1 >= 0 else None,
+                    value[i + 1] if i + 1 < len(value) else None,
+                )
+                for i in range(len(value))
+            ]
+            return delimiter.join(filter(lambda s: s is not noop, pieces))
         return noop
 
     @rule
