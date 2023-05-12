@@ -247,6 +247,12 @@ class JsonToMd:
             lines.append("")
             return "\n".join(lines)
         return noop
+    
+    @rule
+    def block_image(self, value, prv=None, nxt=None):
+        if isinstance(value, dict) and value.get("type", "") == "image":
+            return f"![{self.json2md(value['image']['caption'])}]({value['image']['file']['url']})"
+        return noop
 
     @rule
     def block_toggle(self, value, prv=None, nxt=None):
