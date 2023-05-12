@@ -260,7 +260,7 @@ class JsonToMd:
             if caption_mode == 'alt':
                 return f"![{caption}]({value['image']['file']['url']})"
             elif caption_mode == 'em':
-                return f"![]({value['image']['file']['url']})\n*{caption}*"
+                return f"![]({value['image']['file']['url']})\n<em>{caption}</em>"
             elif caption_mode == 'none':
                 return f"![]({value['image']['file']['url']})"
         return noop
