@@ -250,8 +250,19 @@ class JsonToMd:
     
     @rule
     def block_image(self, value, prv=None, nxt=None):
+        """
+        Options:
+        - caption_mode: alt, em, none
+        """
         if isinstance(value, dict) and value.get("type", "") == "image":
-            return f"![{self.json2md(value['image']['caption'])}]({value['image']['file']['url']})"
+            caption_mode = (self.config or {}).get("block_image", {}).get('caption_mode', 'em')
+            caption = self.json2md(value['image']['caption'])
+            if caption_mode == 'alt':
+                return f"![{caption}]({value['image']['file']['url']})"
+            elif caption_mode == 'em':
+                return f"![]({value['image']['file']['url']})\n*{caption}*"
+            elif caption_mode == 'none':
+                return f"![]({value['image']['file']['url']})"
         return noop
 
     @rule
