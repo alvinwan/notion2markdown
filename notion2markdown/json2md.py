@@ -270,6 +270,15 @@ class JsonToMd:
         if isinstance(value, dict) and value.get("type", "") == "toggle":
             return f"<details>\n<summary>{self.json2md(value['toggle']['rich_text'])}</summary>\n{self.jsons2md(value['children'])}</details>"
         return noop
+    
+    @rule
+    def block_math(self, value, prv=None, nxt=None):
+        """
+        After including this in your markdown or HTML, you can then render the math using [MathJax](https://github.com/mathjax/MathJax).
+        """
+        if isinstance(value, dict) and value.get("type", "") == "equation":
+            return f"$${value['equation']['expression']}$$"
+        return noop
 
     @rule
     def unpack_type(self, value, prv=None, nxt=None):
