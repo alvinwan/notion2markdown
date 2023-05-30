@@ -234,14 +234,14 @@ class JsonToMd:
             table = value["children"]
             header = table[0]["table_row"]["cells"]
             lines.append(
-                "|" + "|".join([self.json2md(cell[0]["text"]) for cell in header]) + "|"
+                "|" + "|".join([self.json2md(cell[0]) for cell in header]) + "|"
             )
             lines.append("|" + "|".join(["---" for _ in header]) + "|")
             for child in table[1:]:
                 row = child["table_row"]["cells"]
                 lines.append(
                     "|"
-                    + "|".join([self.json2md(cell[0]["text"]) for cell in row])
+                    + "|".join([self.json2md(cell[0]) for cell in row])
                     + "|"
                 )
             lines.append("")
@@ -277,7 +277,10 @@ class JsonToMd:
         After including this in your markdown or HTML, you can then render the math using [MathJax](https://github.com/mathjax/MathJax).
         """
         if isinstance(value, dict) and value.get("type", "") == "equation":
-            return f"$${value['equation']['expression']}$$"
+            expression = value['equation']['expression'].replace('\\', '\\\\').replace('_', '\\_')
+            if value.get('object') == 'block':
+                return f"$${expression}$$"
+            return f"${expression}$"
         return noop
 
     @rule
