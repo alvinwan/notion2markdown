@@ -255,14 +255,22 @@ class JsonToMd:
         - caption_mode: alt, em, none
         """
         if isinstance(value, dict) and value.get("type", "") == "image":
+            image = value['image']
             caption_mode = (self.config or {}).get("block_image", {}).get('caption_mode', 'em')
-            caption = self.json2md(value['image']['caption'])
+            caption = self.json2md(image['caption'])
+
+            if 'file' in image:
+                url = image['file']['url']
+            elif 'external' in image:
+                url = image['external']['url']
+            else:
+                url = None
             if caption_mode == 'alt':
-                return f"![{caption}]({value['image']['file']['url']})"
+                return f"![{caption}]({url})"
             elif caption_mode == 'em':
-                return f"![]({value['image']['file']['url']})\n<em>{caption}</em>"
+                return f"![]({url})\n<em>{caption}</em>"
             elif caption_mode == 'none':
-                return f"![]({value['image']['file']['url']})"
+                return f"![]({url})"
         return noop
 
     @rule
