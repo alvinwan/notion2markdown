@@ -64,7 +64,6 @@ class JsonToMdConverter:
                 if page_id not in page_id_to_metadata:  # page has been deleted
                     continue
                 metadata = page_id_to_metadata[page_id]
-                print(metadata)
                 markdown = JsonToMd(metadata).page2md(blocks)
                 with open(path, "w") as f:
                     f.write(markdown)
@@ -436,8 +435,3 @@ class JsonToMd:
             markdown += f"# {title}\n\n"
         markdown += self.jsons2md(blocks)
         return markdown
-
-
-if __name__ =="__main__":
-    converter = JsonToMdConverter()
-    converter.convert("./json", "./md1")

@@ -33,10 +33,6 @@ def main():
     else:
         filter = DEFAULT_FILTER
 
-    print(strip_meta_chars)
-    print(extension)
-    print(no_filter)
-
     exporter = NotionExporter(token=token, strip_meta_chars=strip_meta_chars, extension=extension, filter=filter)
     path = exporter.export_url(url=args.url)
     logger.info(f"Exported to {path}")
