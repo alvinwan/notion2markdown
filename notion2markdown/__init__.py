@@ -5,9 +5,9 @@ from .json2md import JsonToMdConverter
 
 
 class NotionExporter:
-    def __init__(self, token: str):
-        self.downloader = NotionDownloader(token)
-        self.converter = JsonToMdConverter()
+    def __init__(self, token: str, strip_meta_chars: str, extension: str, filter=dict):
+        self.downloader = NotionDownloader(token, filter)
+        self.converter = JsonToMdConverter(strip_meta_chars=strip_meta_chars, extension=extension)
 
     def export_url(self, url: str, json_dir: Union[str, Path]='./json', md_dir: Union[str, Path]='./md'):
         """Export the notion page or database."""
