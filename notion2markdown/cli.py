@@ -35,4 +35,4 @@ def main():
 
     exporter = NotionExporter(token=token, strip_meta_chars=strip_meta_chars, extension=extension, filter=filter)
     path = exporter.export_url(url=args.url)
-    logger.info(f"Exported to {path}")
+    logger.info(f"Exported to {path} directory")

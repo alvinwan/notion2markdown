@@ -105,7 +105,6 @@ class NotionClient:
 
     def get_database(self, database_id: str) -> List:
         """Fetch pages in database as json."""
-        print(self.filter)
         if self.filter:
             results = paginate(
                 self.client.databases.query,
