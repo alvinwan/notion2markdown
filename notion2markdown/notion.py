@@ -10,9 +10,9 @@ from notion_client.helpers import iterate_paginated_api as paginate
 
 
 class NotionDownloader:
-    def __init__(self, token: str):
+    def __init__(self, token: str, filter: str):
         self.transformer = LastEditedToDateTime()
-        self.notion = NotionClient(token=token, transformer=self.transformer)
+        self.notion = NotionClient(token=token, transformer=self.transformer, filter=filter)
         self.io = NotionIO(self.transformer)
 
     def download_url(self, url: str, out_dir: Union[str, Path]='./json'):
@@ -82,16 +82,10 @@ class NotionIO:
 
 
 class NotionClient:
-    DEFAULT_FILTER = {
-        "property": "Status",
-        "status": {
-            "equals": "Done",
-        },
-    }
-
-    def __init__(self, token: str, transformer):
+    def __init__(self, token: str, transformer, filter: dict):
         self.client = Client(auth=token)
         self.transformer = transformer
+        self.filter = filter
 
     def get_metadata(self, page_id: str) -> dict:
         """Get page metadata as json."""
@@ -109,11 +103,17 @@ class NotionClient:
             blocks.append(child)
         return list(self.transformer.forward(blocks))
 
-    def get_database(self, database_id: str, filter=DEFAULT_FILTER) -> List:
+    def get_database(self, database_id: str) -> List:
         """Fetch pages in database as json."""
-        results = paginate(
-            self.client.databases.query,
-            database_id=database_id,
-            filter=filter,
-        )
+        if self.filter:
+            results = paginate(
+                self.client.databases.query,
+                database_id=database_id,
+                filter=self.filter,
+            )
+        else:
+            results = paginate(
+                self.client.databases.query,
+                database_id=database_id,
+            )
         return list(self.transformer.forward(chain(*results)))

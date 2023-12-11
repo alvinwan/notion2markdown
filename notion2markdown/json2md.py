@@ -5,9 +5,6 @@ import json
 from pathlib import Path
 from typing import List, Union
 
-from .utils import normalize_id
-
-
 class Noop:
     pass
 
@@ -23,11 +20,22 @@ def rule(func):
     return func
 
 
+
 class JsonToMdConverter:
+    def __init__(self, strip_meta_chars=None, extension="md"):
+        self.stripchars=strip_meta_chars
+        self.extention=extension
+
+    def get_key(self, value):
+        if self.stripchars == None:
+            return value
+
+        return value.strip(self.stripchars)
+
     def get_post_metadata(self, post):
         converter = JsonToMd(config={"apply_list": {"delimiter": ","}})
         return {
-            key: converter.json2md(value)
+            key: self.get_key(converter.json2md(value))
             for key, value in post["properties"].items()
             if converter.json2md(value)
         }
@@ -52,7 +60,7 @@ class JsonToMdConverter:
             with open(path) as f:
                 blocks = json.load(f)
                 page_id = Path(path).stem
-                path = md_dir / f"{page_id}.md"
+                path = md_dir / f"{page_id}.{self.extention}"
                 if page_id not in page_id_to_metadata:  # page has been deleted
                     continue
                 metadata = page_id_to_metadata[page_id]
@@ -116,6 +124,15 @@ class JsonToMd:
         >>> hello_strike = {"type": "text", "text": {"content": "hello", "link": None}, "annotations": {"bold": False, "italic": False, "strikethrough": True, "underline": False, "code": False, "color": "default"}}
         >>> c.json2md([hello_strike, hello_bold_strike])
         '~~hello**hello**~~'
+        >>> c = JsonToMd()
+        >>> heading = {"type":"text","text":{"content":"Payment Claim assessed by Head Contractor","link":None},"annotations":{"bold":True,"italic":False,"strikethrough":False,"underline":False,"code":False,"color":"blue"},"plain_text":"Payment Claim assessed by Head Contractor","href":None}
+        >>> c.json2md(heading)
+        '**Payment Claim assessed by Head Contractor**'
+        >>> c = JsonToMd()
+        >>> heading = {"type":"text","text":{"content":"Payment Claim assessed by Head Contractor","link":None},"annotations":{"bold":True,"italic":False,"strikethrough":False,"underline":False,"code":False,"color":"blue"},"plain_text":"Payment Claim assessed by Head Contractor","href":None}
+        >>> blank = {"type":"text","text":{"content":"\\n","link":None},"annotations":{"bold":True,"italic":False,"strikethrough":False,"underline":False,"code":False,"color":"default"},"plain_text":"\\n","href":None}
+        >>> c.json2md(heading, None, blank)
+        '**Payment Claim assessed by Head Contractor**'
         """
         if isinstance(value, dict) and "type" in value:
             state = self.state["apply_annotation"]
@@ -137,7 +154,7 @@ class JsonToMd:
                     applied.insert(0, annotation)
                     if not (prv and prv.get("annotations", {}).get(annotation)):
                         text = '\n'.join([
-                            f'{mark}{line}' if line else ''
+                            f'{mark}{line.strip()}' if line else ''
                             for line in text.split('\n')
                         ])  # NOTE: markdown syntax does not apply to multiple lines
 
@@ -146,6 +163,11 @@ class JsonToMd:
 
             # close annotations in the order they were opened
             for annotation in self.state["apply_annotation"]["annotations"][::-1]:
+
+                # Strange case where an empty bold new line stops from terminating block
+                if nxt and (nxt.get("text", {}).get("content") == "\n" or nxt.get("text", {}).get("content") == " "):
+                    nxt=None
+
                 if not (nxt and nxt.get("annotations", {}).get(annotation)):
                     self.state["apply_annotation"]["annotations"].remove(annotation)
                     text = '\n'.join([
@@ -187,6 +209,32 @@ class JsonToMd:
         return noop
 
     @rule
+    def block_bookmark(self, value, prv=None, nxt=None):
+        """
+        >>> c = JsonToMd()
+        >>> item = {"object":"block","id":"f750cdfd99ee43319c26b13784b75a38","parent":{"type":"block_id","block_id":"9f46d84c-e671-465f-ab2a-0e57700b44d9"},"created_time":"2023-08-21T05:26:00.000Z","last_edited_time":"2023-08-21T05:26:00Z","created_by":{"object":"user","id":"f6647474-4586-45da-bb70-352d6c81336f"},"last_edited_by":{"object":"user","id":"f6647474-4586-45da-bb70-352d6c81336f"},"has_children":False,"archived":False,"type":"bookmark","bookmark":{"caption":[],"url":"https://www.qbcc.qld.gov.au/running-business/trust-accounts/pbs-building-qld-pty-ltd"},"children":[]}
+        >>> c.block_bookmark(item)
+        '[External Link](https://www.qbcc.qld.gov.au/running-business/trust-accounts/pbs-building-qld-pty-ltd)'
+        """
+        # Following this convention: https://docs.readme.com/rdmd/docs/callouts (callouts denoted by leading emoji)
+        if isinstance(value, dict) and value.get("type", "") == "bookmark":
+            url = value.get("bookmark")["url"]
+            return f"[External Link]({url})"
+        return noop
+
+    @rule
+    def block_divider(self, value, prv=None, nxt=None):
+        """
+        >>> c = JsonToMd()
+        >>> divider = {"object":"block","id":"6d971a9c59d045e9b1eb9ab6d1fc0cc5","parent":{"type":"page_id","page_id":"8d9f3b08-ed27-4600-b238-b8105fdb6c09"},"created_time":"2023-06-19T04:00:00.000Z","last_edited_time":"2023-06-19T04:00:00Z","created_by":{"object":"user","id":"f6647474-4586-45da-bb70-352d6c81336f"},"last_edited_by":{"object":"user","id":"f6647474-4586-45da-bb70-352d6c81336f"},"has_children":False,"archived":False,"type":"divider","divider":{},"children":[]}
+        >>> c.block_divider(divider)
+        '<div></div>'
+        """
+        if isinstance(value, dict) and value.get("type", "") == "divider":
+            return "<div></div>"
+        return noop
+
+    @rule
     def block_item(self, value, prv=None, nxt=None):
         if isinstance(value, dict) and value.get("type", "") in (
             "bulleted_list_item",
@@ -206,6 +254,21 @@ class JsonToMd:
                 lines.extend([f"{indent}{line}" for line in sub.splitlines()])
                 lines.append("")
             return "\n".join(lines)
+        return noop
+
+    @rule
+    def apply_file(self, value, prv=None, nxt=None):
+        """
+        >>> c = JsonToMd()
+        >>> icon = {"type":"external","external":{"url":"https://www.notion.so/icons/info-alternate_gray.svg"}}
+        >>> c.apply_file(icon)
+        '![icon](https://www.notion.so/icons/info-alternate_gray.svg)'
+        """
+        if isinstance(value, dict):
+            if value.get("type", "") == "external" and value.get("external"):
+                url = value.get("external")["url"]
+                caption = "icon"
+                return f"![{caption}]({url})"
         return noop
 
     @rule
@@ -247,7 +310,7 @@ class JsonToMd:
             lines.append("")
             return "\n".join(lines)
         return noop
-    
+
     @rule
     def block_image(self, value, prv=None, nxt=None):
         """
@@ -278,7 +341,7 @@ class JsonToMd:
         if isinstance(value, dict) and value.get("type", "") == "toggle":
             return f"<details>\n<summary>{self.json2md(value['toggle']['rich_text'])}</summary>\n{self.jsons2md(value['children'])}</details>"
         return noop
-    
+
     @rule
     def block_math(self, value, prv=None, nxt=None):
         """
@@ -336,6 +399,7 @@ class JsonToMd:
         for rule in rules:
             if (md := rule(self, value, prv, nxt)) is not noop:
                 return md
+
         return noop
 
     def jsons2md(self, blocks: List) -> str:
@@ -352,12 +416,12 @@ class JsonToMd:
                 result += "\n" + md
             else:
                 raise NotImplementedError(f"Unsupported block type: {cur['type']}")
-            
+
             if cur["type"] != (nxt and nxt["type"]):
-                result += "\n" 
+                result += "\n"
 
             if cur["type"] == "callout" and (nxt and nxt["type"] == "callout"):
-                result += '\n<!-- -->\n'  # weird property of blockquote parsing: https://stackoverflow.com/a/13066620/4855984
+                result += '\n<div></div>\n'  # weird property of blockquote parsing: https://stackoverflow.com/a/13066620/4855984
         return result
 
     def page2md(self, blocks: List[dict]) -> str:
