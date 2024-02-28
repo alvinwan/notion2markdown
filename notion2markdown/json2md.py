@@ -297,7 +297,7 @@ class JsonToMd:
             table = value["children"]
             header = table[0]["table_row"]["cells"]
             lines.append(
-                "|" + "|".join([self.json2md(cell[0]) for cell in header]) + "|"
+                "|" + "|".join([self.json2md(cell[0]) if cell else '' for cell in header]) + "|"
             )
             lines.append("|" + "|".join(["---" for _ in header]) + "|")
             for child in table[1:]:
@@ -328,6 +328,7 @@ class JsonToMd:
                 url = image['external']['url']
             else:
                 url = None
+
             if caption_mode == 'alt':
                 return f"![{caption}]({url})"
             elif caption_mode == 'em':
