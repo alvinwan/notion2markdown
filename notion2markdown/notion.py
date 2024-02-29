@@ -2,7 +2,7 @@ from datetime import datetime
 from pathlib import Path
 import json
 from itertools import chain
-from typing import List, Union
+from typing import List, Union, Optional
 from .utils import logger, normalize_id
 
 from notion_client import Client
@@ -10,7 +10,7 @@ from notion_client.helpers import iterate_paginated_api as paginate
 
 
 class NotionDownloader:
-    def __init__(self, token: str, filter: str):
+    def __init__(self, token: str, filter: Optional[str]=None):
         self.transformer = LastEditedToDateTime()
         self.notion = NotionClient(token=token, transformer=self.transformer, filter=filter)
         self.io = NotionIO(self.transformer)
@@ -82,7 +82,7 @@ class NotionIO:
 
 
 class NotionClient:
-    def __init__(self, token: str, transformer, filter: dict):
+    def __init__(self, token: str, transformer, filter: Optional[dict]=None):
         self.client = Client(auth=token)
         self.transformer = transformer
         self.filter = filter
