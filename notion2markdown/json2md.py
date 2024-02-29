@@ -4,6 +4,7 @@ import glob
 import json
 from pathlib import Path
 from typing import List, Union
+from .utils import normalize_id
 
 class Noop:
     pass
