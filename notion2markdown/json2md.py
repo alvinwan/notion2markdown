@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 from typing import List, Union
 from .utils import normalize_id
+import re
 
 class Noop:
     pass
@@ -30,8 +31,7 @@ class JsonToMdConverter:
     def get_key(self, value):
         if self.stripchars == None:
             return value
-
-        return value.strip(self.stripchars)
+        return value.strip().strip(self.stripchars)
 
     def get_post_metadata(self, post):
         converter = JsonToMd(config={"apply_list": {"delimiter": ","}})
@@ -114,9 +114,17 @@ class JsonToMd:
     }):
         """
         >>> c = JsonToMd()
+        >>> bold_space = {"type": "text", "text": {"content": " ", "link": None}, "annotations": {"bold": True, "italic": False, "strikethrough": False, "underline": False, "code": False, "color": "default"}}
+        >>> c.json2md(bold_space)
+        ' '
+        >>> c = JsonToMd()
         >>> hello_bold = {"type": "text", "text": {"content": "hello", "link": None}, "annotations": {"bold": True, "italic": False, "strikethrough": False, "underline": False, "code": False, "color": "default"}}
         >>> c.json2md(hello_bold)
         '**hello**'
+        >>> c = JsonToMd()
+        >>> hello_world_space = {"type": "text", "text": {"content": "hello world ", "link": None}, "annotations": {"bold": True, "italic": False, "strikethrough": False, "underline": False, "code": False, "color": "default"}}
+        >>> c.json2md(hello_world_space)
+        '**hello world** '
         >>> hello_bold_strike = {"type": "text", "text": {"content": "hello", "link": None}, "annotations": {"bold": True, "italic": False, "strikethrough": True, "underline": False, "code": False, "color": "default"}}
         >>> c.json2md(hello_bold_strike)
         '**~~hello~~**'
@@ -130,9 +138,9 @@ class JsonToMd:
         >>> c.json2md(heading)
         '**Payment Claim assessed by Head Contractor**'
         >>> c = JsonToMd()
-        >>> heading = {"type":"text","text":{"content":"Payment Claim assessed by Head Contractor","link":None},"annotations":{"bold":True,"italic":False,"strikethrough":False,"underline":False,"code":False,"color":"blue"},"plain_text":"Payment Claim assessed by Head Contractor","href":None}
+        >>> heading_strange_blank_line = {"type":"text","text":{"content":"Payment Claim assessed by Head Contractor","link":None},"annotations":{"bold":True,"italic":False,"strikethrough":False,"underline":False,"code":False,"color":"blue"},"plain_text":"Payment Claim assessed by Head Contractor","href":None}
         >>> blank = {"type":"text","text":{"content":"\\n","link":None},"annotations":{"bold":True,"italic":False,"strikethrough":False,"underline":False,"code":False,"color":"default"},"plain_text":"\\n","href":None}
-        >>> c.json2md(heading, None, blank)
+        >>> c.json2md(heading_strange_blank_line, None, blank)
         '**Payment Claim assessed by Head Contractor**'
         """
         if isinstance(value, dict) and "type" in value:
@@ -141,6 +149,20 @@ class JsonToMd:
                 state["annotations"] = []
             text = self.json2md(value[value["type"]])
             annotations = value.get("annotations", {})
+            empty = ""
+
+            def preserveTrailingSpace(line:str, mark:str):
+                tokens = re.split(r'(\s+)', line)
+                hasTrailingWhitespace = len(tokens) > 2 and re.match(r'\s+', tokens[-2]) and tokens[-1] == ""
+                if hasTrailingWhitespace:
+                    text = "".join(tokens[0:-2]).strip()
+                    return f'{text}{mark}{tokens[-2]}'
+                return f'{line}{mark}'
+
+
+            # Will otherwise generate ****
+            if text == " ":
+                return " "
 
             # open annotations first
             applied = []
@@ -155,7 +177,11 @@ class JsonToMd:
                     applied.insert(0, annotation)
                     if not (prv and prv.get("annotations", {}).get(annotation)):
                         text = '\n'.join([
+<<<<<<< Updated upstream
                             f'{mark}{line.strip()}' if line else ''
+=======
+                            f'{mark}{line}' if line else empty
+>>>>>>> Stashed changes
                             for line in text.split('\n')
                         ])  # NOTE: markdown syntax does not apply to multiple lines
 
@@ -172,7 +198,7 @@ class JsonToMd:
                 if not (nxt and nxt.get("annotations", {}).get(annotation)):
                     self.state["apply_annotation"]["annotations"].remove(annotation)
                     text = '\n'.join([
-                        f'{line}{annotation_to_mark[annotation]}' if line else ''
+                        preserveTrailingSpace(line,annotation_to_mark[annotation]) if line else ''
                         for line in text.split('\n')
                     ])  # NOTE: markdown syntax does not apply to multiple lines
             return text
@@ -199,7 +225,17 @@ class JsonToMd:
     @rule
     def block_paragraph(self, value, prv=None, nxt=None):
         if isinstance(value, dict) and value.get("type", "") == "paragraph":
-            return f"{self.json2md(value['paragraph']['rich_text'])}\n"
+            indent = (
+                    (self.config or {}).get("block_item", {}).get("indent", "    ")
+                )  # TODO: make getting config less ugly
+
+            lines = []
+            lines.append(f"{self.json2md(value['paragraph']['rich_text'])}\n")
+            if value["has_children"]:
+                sub = self.jsons2md(value["children"], True)
+                lines.extend([f"{indent}{line}\n" for line in sub.splitlines()])
+                lines.append("")
+            return "".join(lines)
         return noop
 
     @rule
@@ -393,7 +429,7 @@ class JsonToMd:
             return ""
         return noop
 
-    def json2md(self, value: Union[str, List, dict], prv=None, nxt=None) -> str:
+    def json2md(self, value: Union[str, List, dict], prv=None, nxt=None, log=False) -> str:
         """
         Lower-level conversion from notion JSON to markdown. This is the core of
         the conversion logic.
@@ -404,7 +440,7 @@ class JsonToMd:
 
         return noop
 
-    def jsons2md(self, blocks: List) -> str:
+    def jsons2md(self, blocks: List, log: bool=False) -> str:
         """
         Top-level conversion from notion JSON to markdown. In this top-level, we
         add line breaks in between block types.
@@ -414,7 +450,7 @@ class JsonToMd:
             cur = blocks[i]
             prv = blocks[i - 1] if i > 0 else None
             nxt = blocks[i + 1] if i + 1 < len(blocks) else None
-            if (md := self.json2md(cur, prv, nxt)) is not noop:
+            if (md := self.json2md(cur, prv, nxt, log)) is not noop:
                 result += "\n" + md
             else:
                 raise NotImplementedError(f"Unsupported block type: {cur['type']}")
