@@ -230,7 +230,6 @@ class JsonToMd:
             if value["has_children"]:
                 sub = self.jsons2md(value["children"])
                 lines.extend([f"{indent}{line}\n" for line in sub.splitlines()])
-                lines.append("")
             return "".join(lines)
         return noop
 
