@@ -228,7 +228,7 @@ class JsonToMd:
             lines = []
             lines.append(f"{self.json2md(value['paragraph']['rich_text'])}\n")
             if value["has_children"]:
-                sub = self.jsons2md(value["children"], True)
+                sub = self.jsons2md(value["children"])
                 lines.extend([f"{indent}{line}\n" for line in sub.splitlines()])
                 lines.append("")
             return "".join(lines)
@@ -425,7 +425,7 @@ class JsonToMd:
             return ""
         return noop
 
-    def json2md(self, value: Union[str, List, dict], prv=None, nxt=None, log=False) -> str:
+    def json2md(self, value: Union[str, List, dict], prv=None, nxt=None) -> str:
         """
         Lower-level conversion from notion JSON to markdown. This is the core of
         the conversion logic.
@@ -436,7 +436,7 @@ class JsonToMd:
 
         return noop
 
-    def jsons2md(self, blocks: List, log: bool=False) -> str:
+    def jsons2md(self, blocks: List) -> str:
         """
         Top-level conversion from notion JSON to markdown. In this top-level, we
         add line breaks in between block types.
@@ -446,7 +446,7 @@ class JsonToMd:
             cur = blocks[i]
             prv = blocks[i - 1] if i > 0 else None
             nxt = blocks[i + 1] if i + 1 < len(blocks) else None
-            if (md := self.json2md(cur, prv, nxt, log)) is not noop:
+            if (md := self.json2md(cur, prv, nxt)) is not noop:
                 result += "\n" + md
             else:
                 raise NotImplementedError(f"Unsupported block type: {cur['type']}")
