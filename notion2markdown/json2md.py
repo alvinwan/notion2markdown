@@ -177,11 +177,7 @@ class JsonToMd:
                     applied.insert(0, annotation)
                     if not (prv and prv.get("annotations", {}).get(annotation)):
                         text = '\n'.join([
-<<<<<<< Updated upstream
-                            f'{mark}{line.strip()}' if line else ''
-=======
                             f'{mark}{line}' if line else empty
->>>>>>> Stashed changes
                             for line in text.split('\n')
                         ])  # NOTE: markdown syntax does not apply to multiple lines
 
