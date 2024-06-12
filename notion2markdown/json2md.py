@@ -66,7 +66,7 @@ class JsonToMdConverter:
                     continue
                 metadata = page_id_to_metadata[page_id]
                 markdown = JsonToMd(metadata).page2md(blocks)
-                with open(path, "w") as f:
+                with open(path, "w", encoding='utf-8') as f:
                     f.write(markdown)
 
                 if len(paths) == 1:
