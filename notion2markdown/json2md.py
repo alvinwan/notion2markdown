@@ -301,7 +301,10 @@ class JsonToMd:
     @rule
     def block_code(self, value, prv=None, nxt=None):
         if isinstance(value, dict) and value.get("type", "") == "code":
-            return f"```{value['code']['language']}\n{self.json2md(value['code']['rich_text'])}\n```"
+            language = value['code']['language'] if 'language' in value['code'] else ''
+            code_content = self.json2md(value['code']['rich_text'])
+
+            return f"<pre style='background-color: #f0f0f0'><code class='language-{language}'>{code_content}</code></pre>"
         return noop
 
     @rule
@@ -309,19 +312,23 @@ class JsonToMd:
         if isinstance(value, dict) and value.get("type", "") == "table":
             lines = []
             table = value["children"]
+            lines.append("<table>")
             header = table[0]["table_row"]["cells"]
+            lines.append("<thead><tr>")
             lines.append(
-                "|" + "|".join([self.json2md(cell[0]) if cell else '' for cell in header]) + "|"
+                "".join([f"<th>{self.json2md(cell[0]) if cell else ''}</th>" for cell in header])
             )
-            lines.append("|" + "|".join(["---" for _ in header]) + "|")
+            lines.append("</tr></thead>")
+            lines.append("<tbody>")
             for child in table[1:]:
                 row = child["table_row"]["cells"]
+                lines.append("<tr>")
                 lines.append(
-                    "|"
-                    + "|".join([self.json2md(cell[0]) for cell in row])
-                    + "|"
+                    "".join([f"<td>{self.json2md(cell[0])}</td>" for cell in row])
                 )
-            lines.append("")
+                lines.append("</tr>")
+            lines.append("</tbody>")
+            lines.append("</table>")
             return "\n".join(lines)
         return noop
 
@@ -333,7 +340,7 @@ class JsonToMd:
         """
         if isinstance(value, dict) and value.get("type", "") == "image":
             image = value['image']
-            caption_mode = (self.config or {}).get("block_image", {}).get('caption_mode', 'em')
+            caption_mode = (self.config or {}).get("block_image", {}).get('caption_mode', 'none')
             caption = self.json2md(image['caption'])
 
             if 'file' in image:
@@ -406,6 +413,20 @@ class JsonToMd:
             return ""
         return noop
 
+    def add_children(self, blocks: List[dict]) -> List[dict]:
+        children_cache = { block["id"]: [] for block in blocks }
+
+        for block in blocks:
+            parent_id = block["parent"].get("block_id", None)
+            if parent_id is not None and parent_id in children_cache:
+                children_cache[parent_id].append(block)
+
+        for block in blocks:
+            if block["has_children"]:
+                block["children"] = children_cache[block["id"]]
+
+        return [ block for block in blocks if block["parent"].get("block_id", None) is None ]
+
     def json2md(self, value: Union[str, List, dict], prv=None, nxt=None) -> str:
         """
         Lower-level conversion from notion JSON to markdown. This is the core of
@@ -439,8 +460,10 @@ class JsonToMd:
                 result += '\n<div></div>\n'  # weird property of blockquote parsing: https://stackoverflow.com/a/13066620/4855984
         return result
 
-    def page2md(self, blocks: List[dict]) -> str:
+    def page2md(self, blocks: List[dict], parse_children=False) -> str:
         """Converts a notion page to markdown."""
+        if parse_children:
+            blocks = self.add_children(blocks)
         markdown = "---\n"
         for key, value in self.metadata.items():
             if value:
