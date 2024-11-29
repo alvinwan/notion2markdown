@@ -462,13 +462,15 @@ class JsonToMd:
 
     def page2md(self, blocks: List[dict], parse_children=False) -> str:
         """Converts a notion page to markdown."""
+        markdown = ""
         if parse_children:
             blocks = self.add_children(blocks)
-        markdown = "---\n"
-        for key, value in self.metadata.items():
-            if value:
-                markdown += f"{key}: {value}\n"
-        markdown += f"---\n\n"
+        if self.metadata != {}:
+            markdown = "---\n"
+            for key, value in self.metadata.items():
+                if value:
+                    markdown += f"{key}: {value}\n"
+            markdown += f"---\n\n"
         if title := self.metadata.get('Name') or self.metadata.get('title'):
             markdown += f"# {title}\n\n"
         markdown += self.jsons2md(blocks)
