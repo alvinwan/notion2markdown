@@ -66,7 +66,7 @@ class JsonToMdConverter:
                     continue
                 metadata = page_id_to_metadata[page_id]
                 markdown = JsonToMd(metadata).page2md(blocks)
-                with open(path, "w") as f:
+                with open(path, "w", encoding='utf-8') as f:
                     f.write(markdown)
 
                 if len(paths) == 1:
@@ -160,6 +160,8 @@ class JsonToMd:
                     applied.insert(0, annotation)
                     if not (prv and prv.get("annotations", {}).get(annotation)):
                         lines = []
+                        if text is noop or not hasattr(text, 'split'):
+                            return noop
                         for line in text.split('\n'):
                             if line:
                                 whitespace, stripped = get_whitespace(line)
@@ -181,6 +183,9 @@ class JsonToMd:
                 if not (nxt and nxt.get("annotations", {}).get(annotation)):
                     self.state["apply_annotation"]["annotations"].remove(annotation)
                     lines = []
+
+                    if text is noop or not hasattr(text, 'split'):
+                        return noop
                     for line in text.split('\n'):
                         if line:
                             whitespace, stripped = get_whitespace(line, leading=False)
@@ -195,9 +200,19 @@ class JsonToMd:
     def apply_dates(self, value, prv=None, nxt=None):
         if isinstance(value, dict):
             if value.get("start") and not value.get("end"):
-                return datetime.strptime(
-                    self.json2md(value["start"]), "%Y-%m-%d"
-                ).strftime("%b %e, %Y")
+                date_str = self.json2md(value["start"])
+                try:
+                    if 'T' in date_str:
+                        # For ISO format dates like '2025-03-10T11:00:00.000+05:00'
+                        # Remove timezone part for parsing if present
+                        date_part = date_str.split('T')[0]
+                        return datetime.strptime(date_part, "%Y-%m-%d").strftime("%b %d, %Y")
+                    else:
+                        # Original format for simple dates
+                        return datetime.strptime(date_str, "%Y-%m-%d").strftime("%b %d, %Y")
+                except ValueError:
+                    # If we can't parse it, just return the original string
+                    return date_str
         # TODO: catch any other dates?
         return noop
 
@@ -250,25 +265,40 @@ class JsonToMd:
 
     @rule
     def block_item(self, value, prv=None, nxt=None):
-        if isinstance(value, dict) and value.get("type", "") in (
-            "bulleted_list_item",
-            "numbered_list_item",
-        ):
-            indent = (
-                (self.config or {}).get("block_item", {}).get("indent", "    ")
-            )  # TODO: make getting config less ugly
-            marker = {"bulleted_list_item": "-", "numbered_list_item": "1."}[
-                value["type"]
-            ]
+        if isinstance(value, dict) and value.get("type", "") in ("bulleted_list_item", "numbered_list_item"):
+            indent = (self.config or {}).get("block_item", {}).get("indent", "    ")
 
-            lines = []
-            lines.append(f"{marker} {self.json2md(value[value['type']]['rich_text'])}")
+            # Determine if it's a bulleted or numbered list
+            if value["type"] == "bulleted_list_item":
+                marker = "-"
+                self.state.pop("active_numbered_list", None)  # Reset numbered list state
+                self.state.pop("numbered_list_counter", None)
+            else:  # numbered_list_item
+                if "active_numbered_list" not in self.state:
+                    self.state["active_numbered_list"] = True
+                    self.state["numbered_list_counter"] = 1
+                else:
+                    self.state["numbered_list_counter"] += 1
+                marker = f"{self.state['numbered_list_counter']}."
+
+            # Generate the list item
+            lines = [f"{marker} {self.json2md(value[value['type']]['rich_text'])}"]
+
+            # Handle nested lists (if children exist)
             if value["has_children"]:
                 sub = self.jsons2md(value["children"])
                 lines.extend([f"{indent}{line}" for line in sub.splitlines()])
-                lines.append("")
+                lines.append("")  # Add spacing after nested list
+
+            # If the next block is not a list, reset numbered list state
+            if not (nxt and isinstance(nxt, dict) and nxt.get("type") in ("numbered_list_item", "bulleted_list_item")):
+                self.state.pop("active_numbered_list", None)
+                self.state.pop("numbered_list_counter", None)
+
             return "\n".join(lines)
+
         return noop
+
 
     @rule
     def apply_file(self, value, prv=None, nxt=None):
