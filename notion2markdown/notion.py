@@ -1,7 +1,6 @@
 from datetime import datetime
 from pathlib import Path
 import json
-from itertools import chain
 from typing import List, Union, Optional
 from .utils import logger, normalize_id
 
@@ -84,8 +83,9 @@ class NotionIO:
 
 
 class NotionClient:
-    def __init__(self, token: str, transformer, filter: Optional[dict] = None):
-        self.client = Client(auth=token)
+    def __init__(self, token: str, transformer, filter: Optional[dict]=None):
+        # NOTE: The 2025-09-03 API version requires data source aware calls.
+        self.client = Client(auth=token, notion_version="2025-09-03")
         self.transformer = transformer
         self.filter = filter
 
@@ -96,9 +96,7 @@ class NotionClient:
     def get_blocks(self, block_id: int) -> List:
         """Get all page blocks as json. Recursively fetches descendants."""
         blocks = []
-        for child in chain(
-            paginate(self.client.blocks.children.list, block_id=block_id)
-        ):
+        for child in paginate(self.client.blocks.children.list, block_id=block_id):
             child["children"] = (
                 list(self.get_blocks(child["id"])
                      ) if child["has_children"] else []
@@ -108,15 +106,38 @@ class NotionClient:
 
     def get_database(self, database_id: str) -> List:
         """Fetch pages in database as json."""
-        if self.filter:
+        # -- Step 1 ---------------------------------------------------------
+        # Retrieve the data sources for this database. The first entry is the
+        # original database source which mirrors the legacy behaviour.
+        database = self.client.databases.retrieve(database_id=database_id)
+        data_sources = database.get("data_sources", [])
+
+        if not data_sources:
+            # Fall back to the legacy database query if the account has not yet
+            # migrated. This keeps the change minimally invasive.
             results = paginate(
                 self.client.databases.query,
                 database_id=database_id,
-                filter=self.filter,
+                **({"filter": self.filter} if self.filter else {}),
             )
-        else:
-            results = paginate(
-                self.client.databases.query,
-                database_id=database_id,
+            return list(self.transformer.forward(results))
+
+        data_source_id = data_sources[0]["id"]
+
+        # -- Step 2 ---------------------------------------------------------
+        # Query the new data source endpoint. The request mirrors the legacy
+        # paginate() usage so downstream code can remain unchanged.
+        def query_data_source(start_cursor=None):
+            body = {}
+            if self.filter:
+                body["filter"] = self.filter
+            if start_cursor:
+                body["start_cursor"] = start_cursor
+            return self.client.request(
+                path=f"data_sources/{data_source_id}/query",
+                method="POST",
+                body=body or {},
             )
-        return list(self.transformer.forward(chain(*results)))
+
+        results = paginate(query_data_source)
+        return list(self.transformer.forward(results))
