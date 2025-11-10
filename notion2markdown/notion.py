@@ -9,12 +9,13 @@ from notion_client.helpers import iterate_paginated_api as paginate
 
 
 class NotionDownloader:
-    def __init__(self, token: str, filter: Optional[str]=None):
+    def __init__(self, token: str, filter: Optional[str] = None):
         self.transformer = LastEditedToDateTime()
-        self.notion = NotionClient(token=token, transformer=self.transformer, filter=filter)
+        self.notion = NotionClient(
+            token=token, transformer=self.transformer, filter=filter)
         self.io = NotionIO(self.transformer)
 
-    def download_url(self, url: str, out_dir: Union[str, Path]='./json'):
+    def download_url(self, url: str, out_dir: Union[str, Path] = './json'):
         """Download the notion page or database."""
         out_dir = Path(out_dir)
         slug = url.split("/")[-1].split('?')[0]
@@ -24,7 +25,7 @@ class NotionDownloader:
         else:
             self.download_database(slug, out_dir)
 
-    def download_page(self, page_id: str, out_path: Union[str, Path]='./json', fetch_metadata: bool=True):
+    def download_page(self, page_id: str, out_path: Union[str, Path] = './json', fetch_metadata: bool = True):
         """Download the notion page."""
         out_path = Path(out_path)
         out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -35,7 +36,7 @@ class NotionDownloader:
             metadata = self.notion.get_metadata(page_id)
             self.io.save([metadata], out_path.parent / "database.json")
 
-    def download_database(self, database_id: str, out_dir: Union[str, Path]='./json'):
+    def download_database(self, database_id: str, out_dir: Union[str, Path] = './json'):
         """Download the notion database and associated pages."""
         out_dir = Path(out_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
@@ -46,7 +47,8 @@ class NotionDownloader:
 
         for cur in pages:  # download individual pages in database IF updated
             if prev.get(cur["id"], datetime(1, 1, 1)) < cur["last_edited_time"]:
-                self.download_page(cur["id"], out_dir / f"{cur['id']}.json", False)
+                self.download_page(cur["id"], out_dir /
+                                   f"{cur['id']}.json", False)
                 logger.info(f"Downloaded {cur['url']}")
 
 
@@ -96,7 +98,8 @@ class NotionClient:
         blocks = []
         for child in paginate(self.client.blocks.children.list, block_id=block_id):
             child["children"] = (
-                list(self.get_blocks(child["id"])) if child["has_children"] else []
+                list(self.get_blocks(child["id"])
+                     ) if child["has_children"] else []
             )
             blocks.append(child)
         return list(self.transformer.forward(blocks))
