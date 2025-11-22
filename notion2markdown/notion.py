@@ -92,13 +92,22 @@ class NotionClient:
         return self.transformer.forward([self.client.pages.retrieve(page_id=page_id)])[0]
 
     def get_blocks(self, block_id: int) -> List:
-        """Get all page blocks as json. Recursively fetches descendants."""
+        # Get all page blocks as json. Recursively fetches descendants.
         blocks = []
+        # paginate() function is returning a complete list of all blocks at once instead of yielding them one by one:
         for child in paginate(self.client.blocks.children.list, block_id=block_id):
-            child["children"] = (
-                list(self.get_blocks(child["id"])) if child["has_children"] else []
-            )
-            blocks.append(child)
+            if isinstance(child, list):
+                for item in child:
+                    if isinstance(item, dict):
+                        item["children"] = (
+                            list(self.get_blocks(item["id"])) if item.get("has_children") else []
+                        )
+                        blocks.append(item)
+            elif isinstance(child, dict): # handle single dict case
+                child["children"] = (
+                    list(self.get_blocks(child["id"])) if child.get("has_children") else []
+                )
+                blocks.append(child)
         return list(self.transformer.forward(blocks))
 
     def get_database(self, database_id: str) -> List:
